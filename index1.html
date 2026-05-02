@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Computer College of IT</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f4f6fb;color:#1a2340;}
+input,textarea,select{font-family:inherit;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:#f1f1f1;}
+::-webkit-scrollbar-thumb{background:#c9a84c;border-radius:3px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+const navy="#0f2044",navyL="#162d5e",gold="#c9a84c",bg="#f4f6fb",white="#fff",
+      textM="#1a2340",textMu="#6b7a99",bdr="#d6dbe8",danger="#c0392b",
+      success="#1a7a4a",info="#1565c0";
+
+const ADMIN={id:"admin",password:"nadeem2024"};
+
+const initCourses=[
+  {id:"CS101",name:"Introduction to Programming",desc:"Learn fundamentals of programming using Python.",lectures:[
+    {id:"l1",type:"theory",title:"What is Programming?",content:"Programming is the process of creating instructions for a computer. It involves writing code in languages like Python, Java, or C++."},
+    {id:"l2",type:"video",title:"Python Basics",url:"https://www.youtube.com/embed/kqtD5dpn9C8"},
+  ]},
+  {id:"CS102",name:"Web Development",desc:"HTML, CSS, JavaScript and modern web frameworks.",lectures:[
+    {id:"l3",type:"theory",title:"HTML Fundamentals",content:"HTML is the standard markup language for creating web pages. It describes structure using elements and tags."},
+    {id:"l4",type:"video",title:"CSS Crash Course",url:"https://www.youtube.com/embed/yfoY53QXEnI"},
+  ]},
+  {id:"CS103",name:"Database Management",desc:"Relational databases, SQL and data modeling.",lectures:[
+    {id:"l5",type:"theory",title:"Introduction to Databases",content:"A database is an organized collection of structured information. SQL is used to interact with relational databases."},
+  ]},
+];
+
+const initStudents=[
+  {id:"STU001",name:"Ali Hassan",password:"ali123",email:"ali@ccit.edu",phone:"0300-1234567",address:"Lahore, Punjab",avatar:"",enrolledCourses:["CS101","CS102"],progress:{CS101:60,CS102:40},notifications:["Welcome to CCIT!","New lecture added in Web Development."],results:[]},
+  {id:"STU002",name:"Sara Khan",password:"sara123",email:"sara@ccit.edu",phone:"0311-9876543",address:"Faisalabad, Punjab",avatar:"",enrolledCourses:["CS102","CS103"],progress:{CS102:75,CS103:30},notifications:["Welcome to CCIT!"],results:[]},
+];
+
+const initExams=[
+  {id:"EX001",title:"Python Basics Quiz",courseId:"CS101",timeLimit:10,passingMarks:6,assignedTo:"all",questions:[
+    {id:"q1",text:"What is Python?",options:["A database","A programming language","An OS","A browser"],correct:1},
+    {id:"q2",text:"Which symbol is used for comments in Python?",options:["//","/*","#","--"],correct:2},
+    {id:"q3",text:"What does 'print()' do?",options:["Reads input","Displays output","Saves file","Deletes data"],correct:1},
+    {id:"q4",text:"Which data type stores text?",options:["int","float","bool","str"],correct:3},
+    {id:"q5",text:"What is a variable?",options:["A fixed value","A storage location","A loop","A function"],correct:1},
+    {id:"q6",text:"Python is case sensitive?",options:["Yes","No","Sometimes","Never"],correct:0},
+    {id:"q7",text:"Which keyword defines a function?",options:["func","define","def","function"],correct:2},
+    {id:"q8",text:"What is the output of 2+3?",options:["23","5","6","None"],correct:1},
+  ]},
+];
+
+const btn=(v="primary",extra={})=>({background:v==="primary"?navy:v==="gold"?gold:v==="danger"?danger:v==="success"?success:v==="outline"?"transparent":"#eee",color:v==="gold"?navy:v==="outline"?navy:"#fff",border:v==="outline"?`1px solid ${bdr}`:"none",borderRadius:8,padding:"9px 18px",fontSize:14,fontWeight:600,cursor:"pointer",...extra});
+const inp={width:"100%",padding:"10px 14px",borderRadius:8,border:`1px solid ${bdr}`,fontSize:14,marginBottom:12,outline:"none",background:white,color:textM,boxSizing:"border-box"};
+const lbl={fontSize:13,fontWeight:600,color:textMu,marginBottom:4,display:"block"};
+const card={background:white,borderRadius:12,border:`1px solid ${bdr}`,padding:"22px",boxShadow:"0 2px 8px rgba(0,0,0,0.05)"};
+const si=(a)=>({padding:"12px 24px",color:a?gold:"#aab3cc",background:a?"rgba(201,168,76,0.12)":"transparent",cursor:"pointer",fontSize:14,fontWeight:a?600:400,borderLeft:a?`3px solid ${gold}`:"3px solid transparent"});
+
+function Avatar({name,src,size=48}){
+  const ini=name.split(" ").map(w=>w[0]).join("").toUpperCase();
+  if(src)return <img src={src} alt="av" style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",border:`2px solid ${gold}`}}/>;
+  return <div style={{width:size,height:size,borderRadius:"50%",background:gold,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.34,fontWeight:800,color:navy}}>{ini}</div>;
+}
+
+function Modal({title,onClose,children}){
+  return(
+    <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:"1rem"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:white,borderRadius:14,padding:"26px",width:"100%",maxWidth:520,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",maxHeight:"90vh",overflowY:"auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+          <div style={{fontSize:17,fontWeight:700,color:navy}}>{title}</div>
+          <div style={{cursor:"pointer",color:textMu,fontSize:20,lineHeight:1}} onClick={onClose}>×</div>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Navbar({page,setPage,user,logout}){
+  return(
+    <div style={{background:navy,padding:"0 1.5rem",display:"flex",alignItems:"center",justifyContent:"space-between",height:60,position:"sticky",top:0,zIndex:100}}>
+      <div style={{color:gold,fontWeight:800,fontSize:18,cursor:"pointer"}} onClick={()=>setPage("home")}>CCIT</div>
+      <div style={{display:"flex",gap:18,alignItems:"center",flexWrap:"wrap"}}>
+        {["home","courses","about","contact"].map(p=>(
+          <span key={p} style={{color:page===p?gold:"#aab3cc",cursor:"pointer",fontSize:13,fontWeight:page===p?700:400}} onClick={()=>setPage(p)}>{p.charAt(0).toUpperCase()+p.slice(1)}</span>
+        ))}
+        {user?(
+          <>
+            <span style={{color:"#aab3cc",fontSize:13}}>Hi, {user.name.split(" ")[0]}</span>
+            <button style={{...btn("gold"),padding:"6px 14px",fontSize:12}} onClick={()=>setPage(user.role==="admin"?"admin":"dashboard")}>Dashboard</button>
+            <button style={{...btn("outline"),padding:"6px 14px",fontSize:12,color:"#aab3cc",border:"1px solid #aab3cc"}} onClick={logout}>Logout</button>
+          </>
+        ):(
+          <button style={{...btn("gold"),padding:"6px 16px",fontSize:13}} onClick={()=>setPage("login")}>Login</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Home({setPage}){
+  return(
+    <div>
+      <div style={{background:`linear-gradient(135deg,${navy} 60%,${navyL} 100%)`,color:white,padding:"70px 2rem 50px",textAlign:"center"}}>
+        <div style={{fontSize:12,color:gold,letterSpacing:3,fontWeight:600,marginBottom:10}}>WELCOME TO</div>
+        <div style={{fontSize:36,fontWeight:800,color:gold,marginBottom:12}}>Computer College of IT</div>
+        <p style={{fontSize:15,color:"#c5cde0",maxWidth:540,margin:"0 auto 26px",lineHeight:1.8}}>Empowering students with cutting-edge technology education under the guidance of experienced faculty.</p>
+        <button style={{...btn("gold"),padding:"11px 30px",fontSize:15,marginRight:10}} onClick={()=>setPage("login")}>Student Login</button>
+        <button style={{background:"transparent",color:gold,border:`2px solid ${gold}`,borderRadius:8,padding:"9px 30px",fontSize:15,fontWeight:700,cursor:"pointer"}} onClick={()=>setPage("courses")}>View Courses</button>
+      </div>
+      <div style={{padding:"50px 2rem",maxWidth:1000,margin:"0 auto"}}>
+        <div style={{fontSize:24,fontWeight:700,color:navy,textAlign:"center",marginBottom:6}}>Why Choose CCIT?</div>
+        <div style={{width:50,height:4,background:gold,borderRadius:2,margin:"0 auto 32px"}}></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:18}}>
+          {[["Expert Faculty","Learn from experienced professionals in Computer Science.",info],["Modern Curriculum","Up-to-date courses covering latest technologies.",success],["Online Exams","Test your knowledge with our objective exam system.",gold],["Career Ready","Practical skills to prepare you for the job market.",danger]].map(([t,d,c])=>(
+            <div key={t} style={{...card,borderTop:`4px solid ${c}`}}>
+              <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:navy}}>{t}</div>
+              <div style={{color:textMu,fontSize:13,lineHeight:1.7}}>{d}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:navy,padding:"48px 2rem",textAlign:"center"}}>
+        <div style={{fontSize:11,color:gold,letterSpacing:3,fontWeight:600,marginBottom:8}}>HEAD OF DEPARTMENT</div>
+        <div style={{width:68,height:68,borderRadius:"50%",background:gold,margin:"0 auto 12px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:navy}}>NA</div>
+        <div style={{color:white,fontSize:20,fontWeight:700,marginBottom:4}}>Nadeem Ahmad</div>
+        <div style={{color:"#aab3cc",fontSize:13}}>Head of Department — Computer College of IT</div>
+      </div>
+    </div>
+  );
+}
+
+function Courses({courses}){
+  return(
+    <div style={{padding:"48px 2rem",maxWidth:1000,margin:"0 auto"}}>
+      <div style={{fontSize:24,fontWeight:700,color:navy,textAlign:"center",marginBottom:6}}>Our Courses</div>
+      <div style={{width:50,height:4,background:gold,borderRadius:2,margin:"0 auto 32px"}}></div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:18}}>
+        {courses.map(c=>(
+          <div key={c.id} style={card}>
+            <div style={{background:info+"18",color:info,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,display:"inline-block",marginBottom:8}}>{c.id}</div>
+            <div style={{fontWeight:700,fontSize:15,color:navy,marginBottom:6}}>{c.name}</div>
+            <div style={{color:textMu,fontSize:13,lineHeight:1.7,marginBottom:8}}>{c.desc}</div>
+            <div style={{fontSize:12,color:textMu}}>{c.lectures.length} Lecture(s)</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function About(){
+  return(
+    <div style={{padding:"48px 2rem",maxWidth:680,margin:"0 auto"}}>
+      <div style={{fontSize:24,fontWeight:700,color:navy,textAlign:"center",marginBottom:6}}>About CCIT</div>
+      <div style={{width:50,height:4,background:gold,borderRadius:2,margin:"0 auto 32px"}}></div>
+      <div style={card}>
+        <p style={{color:textMu,lineHeight:1.8,fontSize:14,marginBottom:12}}>Computer College of IT (CCIT) is a premier institution dedicated to providing high-quality education in Computer Science and IT. Our mission is to bridge the gap between academic learning and industry requirements.</p>
+        <p style={{color:textMu,lineHeight:1.8,fontSize:14}}>State-of-the-art facilities, experienced faculty, and industry-aligned curriculum ensure students receive the best education including our online examination system.</p>
+        <div style={{marginTop:18,padding:12,background:bg,borderRadius:8}}>
+          <div style={{fontWeight:700,color:navy,marginBottom:4}}>Head of Department</div>
+          <div style={{color:textMu,fontSize:14}}>Nadeem Ahmad — M.Sc Computer Science</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Contact(){
+  return(
+    <div style={{padding:"48px 2rem",maxWidth:860,margin:"0 auto"}}>
+      <div style={{fontSize:24,fontWeight:700,color:navy,textAlign:"center",marginBottom:6}}>Contact Us</div>
+      <div style={{width:50,height:4,background:gold,borderRadius:2,margin:"0 auto 32px"}}></div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:18}}>
+        <div style={card}>
+          {[["Address","Makkah Town Lodhran Road Shujabad, Shujabad, Punjab, Pakistan"],["Phone","+92-300-7181817","+92-300-7746605"],["Email","computercollegeofit.sbd@gmail.com"],["Hours","Mon–Fri: 8:00 AM – 5:00 PM"]].map(([k,v])=>(
+            <div key={k} style={{marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:gold,letterSpacing:1}}>{k.toUpperCase()}</div>
+              <div style={{color:textMu,fontSize:13,marginTop:2}}>{v}</div>
+            </div>
+          ))}
+        </div>
+        <div style={card}>
+          <label style={lbl}>Your Name</label><input style={inp} placeholder="Full Name"/>
+          <label style={lbl}>Email</label><input style={inp} placeholder="email@example.com"/>
+          <label style={lbl}>Message</label>
+          <textarea style={{...inp,height:80,resize:"vertical"}} placeholder="Write your message..."/>
+          <button style={{...btn("gold"),width:"100%",padding:"10px"}}>Send Message</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Login({onLogin,setPage}){
+  const [tab,setTab]=useState("student");
+  const [id,setId]=useState("");const [pw,setPw]=useState("");const [err,setErr]=useState("");
+  return(
+    <div style={{minHeight:"80vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
+      <div style={{...card,width:"100%",maxWidth:390}}>
+        <div style={{textAlign:"center",marginBottom:18}}>
+          <div style={{fontSize:19,fontWeight:800,color:navy,marginBottom:4}}>Computer College of IT</div>
+          <div style={{color:textMu,fontSize:13}}>Sign in to your account</div>
+        </div>
+        <div style={{display:"flex",marginBottom:16,borderRadius:8,overflow:"hidden",border:`1px solid ${bdr}`}}>
+          {["student","admin"].map(t=>(
+            <div key={t} style={{flex:1,padding:"9px",textAlign:"center",cursor:"pointer",background:tab===t?navy:"transparent",color:tab===t?white:textMu,fontSize:13,fontWeight:600}} onClick={()=>{setTab(t);setErr("");}}>
+              {t==="student"?"Student":"Admin"}
+            </div>
+          ))}
+        </div>
+        <label style={lbl}>{tab==="student"?"Student ID":"Admin ID"}</label>
+        <input style={inp} value={id} onChange={e=>setId(e.target.value)} placeholder={tab==="student"?"e.g. STU001":"admin"}/>
+        <label style={lbl}>Password</label>
+        <input style={inp} type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&onLogin(tab,id,pw,setErr)}/>
+        {err&&<div style={{color:danger,fontSize:13,marginBottom:10}}>{err}</div>}
+        <button style={{...btn("primary"),width:"100%",padding:"11px"}} onClick={()=>onLogin(tab,id,pw,setErr)}>Sign In</button>
+        {tab==="student"&&<div style={{textAlign:"center",marginTop:12,fontSize:13,color:textMu}}>New? <span style={{color:info,cursor:"pointer",fontWeight:600}} onClick={()=>setPage("register")}>Register here</span></div>}
+      </div>
+    </div>
+  );
+}
+
+function Register({onReg,setPage}){
+  const [f,setF]=useState({id:"",name:"",email:"",phone:"",address:"",password:"",confirm:""});
+  const [err,setErr]=useState("");
+  const u=(k,v)=>setF(p=>({...p,[k]:v}));
+  const sub=()=>{
+    if(!f.id||!f.name||!f.password)return setErr("Fill all required fields.");
+    if(f.password!==f.confirm)return setErr("Passwords do not match.");
+    onReg(f,setErr);
+  };
+  return(
+    <div style={{minHeight:"80vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
+      <div style={{...card,width:"100%",maxWidth:440}}>
+        <div style={{fontSize:19,fontWeight:800,color:navy,marginBottom:4}}>Create Account</div>
+        <div style={{color:textMu,fontSize:13,marginBottom:16}}>Register as a new CCIT student</div>
+        {[["id","Student ID *"],["name","Full Name *"],["email","Email"],["phone","Phone"],["address","Address"],["password","Password *"],["confirm","Confirm Password *"]].map(([k,l])=>(
+          <div key={k}><label style={lbl}>{l}</label><input style={inp} type={k.includes("pass")||k==="confirm"?"password":"text"} value={f[k]} onChange={e=>u(k,e.target.value)}/></div>
+        ))}
+        {err&&<div style={{color:danger,fontSize:13,marginBottom:10}}>{err}</div>}
+        <button style={{...btn("primary"),width:"100%",padding:"11px"}} onClick={sub}>Register</button>
+        <div style={{textAlign:"center",marginTop:10,fontSize:13,color:textMu}}>Already registered? <span style={{color:info,cursor:"pointer",fontWeight:600}} onClick={()=>setPage("login")}>Login</span></div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── EXAM TAKING COMPONENT ─── */
+function TakeExam({exam,student,onFinish,onCancel}){
+  const [answers,setAnswers]=useState({});
+  const [timeLeft,setTimeLeft]=useState(exam.timeLimit*60);
+  const [submitted,setSubmitted]=useState(false);
+  const [result,setResult]=useState(null);
+  const timerRef=useRef(null);
+
+  useEffect(()=>{
+    timerRef.current=setInterval(()=>{
+      setTimeLeft(t=>{
+        if(t<=1){clearInterval(timerRef.current);handleSubmit(true);return 0;}
+        return t-1;
+      });
+    },1000);
+    return()=>clearInterval(timerRef.current);
+  },[]);
+
+  const handleSubmit=(auto=false)=>{
+    clearInterval(timerRef.current);
+    let score=0;
+    exam.questions.forEach(q=>{if(answers[q.id]===q.correct)score++;});
+    const passed=score>=exam.passingMarks;
+    const res={examId:exam.id,examTitle:exam.title,score,total:exam.questions.length,passingMarks:exam.passingMarks,passed,date:new Date().toLocaleDateString()};
+    setResult(res);setSubmitted(true);
+    onFinish(res);
+  };
+
+  const mm=String(Math.floor(timeLeft/60)).padStart(2,"0");
+  const ss=String(timeLeft%60).padStart(2,"0");
+  const answered=Object.keys(answers).length;
+
+  if(submitted&&result){
+    return(
+      <div style={{maxWidth:600,margin:"0 auto",padding:"2rem"}}>
+        <div style={{...card,textAlign:"center"}}>
+          <div style={{fontSize:60,marginBottom:12}}>{result.passed?"🏆":"📋"}</div>
+          <div style={{fontSize:22,fontWeight:800,color:result.passed?success:danger,marginBottom:8}}>{result.passed?"Congratulations! You Passed!":"Better Luck Next Time"}</div>
+          <div style={{fontSize:15,color:textMu,marginBottom:24}}>{exam.title}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:24}}>
+            {[["Score",`${result.score}/${result.total}`,info],["Passing",result.passingMarks,gold],["Status",result.passed?"Pass":"Fail",result.passed?success:danger]].map(([l,v,c])=>(
+              <div key={l} style={{background:bg,borderRadius:10,padding:"14px 10px",borderTop:`3px solid ${c}`}}>
+                <div style={{fontSize:22,fontWeight:800,color:c}}>{v}</div>
+                <div style={{fontSize:12,color:textMu}}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginBottom:20}}>
+            {exam.questions.map((q,i)=>{
+              const ua=answers[q.id];const correct=ua===q.correct;
+              return(
+                <div key={q.id} style={{textAlign:"left",marginBottom:10,padding:"10px 14px",borderRadius:8,background:correct?success+"12":danger+"12",border:`1px solid ${correct?success:danger}22`}}>
+                  <div style={{fontSize:13,fontWeight:600,color:textM,marginBottom:4}}>Q{i+1}. {q.text}</div>
+                  <div style={{fontSize:12,color:correct?success:danger}}>Your answer: {ua!==undefined?q.options[ua]:"Not answered"} {correct?"✓":"✗"}</div>
+                  {!correct&&<div style={{fontSize:12,color:success}}>Correct: {q.options[q.correct]}</div>}
+                </div>
+              );
+            })}
+          </div>
+          <button style={{...btn("gold"),padding:"10px 28px"}} onClick={onCancel}>Back to Exams</button>
+        </div>
+      </div>
+    );
+  }
+
+  return(
+    <div style={{maxWidth:680,margin:"0 auto",padding:"1.5rem"}}>
+      <div style={{...card,marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center",background:navy}}>
+        <div>
+          <div style={{color:gold,fontWeight:700,fontSize:15}}>{exam.title}</div>
+          <div style={{color:"#aab3cc",fontSize:12}}>{answered}/{exam.questions.length} answered</div>
+        </div>
+        <div style={{textAlign:"center"}}>
+          <div style={{fontSize:26,fontWeight:800,color:timeLeft<60?danger:gold}}>{mm}:{ss}</div>
+          <div style={{color:"#aab3cc",fontSize:11}}>Time Left</div>
+        </div>
+      </div>
+      {exam.questions.map((q,i)=>(
+        <div key={q.id} style={{...card,marginBottom:14}}>
+          <div style={{fontWeight:600,color:navy,fontSize:14,marginBottom:12}}>Q{i+1}. {q.text}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {q.options.map((opt,oi)=>(
+              <div key={oi} onClick={()=>setAnswers(p=>({...p,[q.id]:oi}))} style={{padding:"10px 14px",borderRadius:8,border:`2px solid ${answers[q.id]===oi?gold:bdr}`,background:answers[q.id]===oi?gold+"18":white,cursor:"pointer",fontSize:13,color:textM,fontWeight:answers[q.id]===oi?600:400,transition:"all 0.15s"}}>
+                <span style={{fontWeight:700,color:gold,marginRight:6}}>{String.fromCharCode(65+oi)}.</span>{opt}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div style={{display:"flex",gap:10,marginTop:8}}>
+        <button style={{...btn("gold"),padding:"11px 28px"}} onClick={()=>handleSubmit(false)}>Submit Exam ({answered}/{exam.questions.length})</button>
+        <button style={{...btn("outline"),padding:"11px 18px"}} onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── STUDENT DASHBOARD ─── */
+function StudentDash({user,courses,exams,students,setStudents,logout}){
+  const [tab,setTab]=useState("overview");
+  const [ac,setAc]=useState(null);
+  const [al,setAl]=useState(null);
+  const [search,setSearch]=useState("");
+  const [activeExam,setActiveExam]=useState(null);
+  const st=students.find(s=>s.id===user.id);
+  const enrolled=courses.filter(c=>st.enrolledCourses.includes(c.id));
+  const others=courses.filter(c=>!st.enrolledCourses.includes(c.id));
+
+  const myExams=exams.filter(e=>e.assignedTo==="all"||e.assignedTo===user.id||(Array.isArray(e.assignedTo)&&e.assignedTo.includes(user.id))||st.enrolledCourses.includes(e.courseId));
+
+  const setProgress=(cid,val)=>setStudents(p=>p.map(s=>s.id===user.id?{...s,progress:{...s.progress,[cid]:val}}:s));
+  const changeAvatar=(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    const r=new FileReader();
+    r.onload=ev=>setStudents(p=>p.map(s=>s.id===user.id?{...s,avatar:ev.target.result}:s));
+    r.readAsDataURL(file);
+  };
+  const onExamFinish=(res)=>{
+    setStudents(p=>p.map(s=>s.id===user.id?{...s,results:[...(s.results||[]).filter(r=>r.examId!==res.examId),res]}:s));
+  };
+  const alreadyTaken=(eid)=>(st.results||[]).find(r=>r.examId===eid);
+
+  const items=[["overview","Overview"],["courses","My Courses"],["browse","Browse Courses"],["exams","My Exams"],["results","My Results"],["profile","My Profile"],["notifs","Notifications"]];
+
+  if(activeExam) return <TakeExam exam={activeExam} student={st} onFinish={(res)=>{onExamFinish(res);}} onCancel={()=>setActiveExam(null)}/>;
+
+  return(
+    <div style={{display:"flex",minHeight:"calc(100vh - 60px)"}}>
+      <div style={{width:225,background:navy,flexShrink:0}}>
+        <div style={{padding:"18px 18px 14px",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
+          <Avatar name={st.name} src={st.avatar} size={46}/>
+          <div style={{color:white,fontWeight:700,fontSize:13,marginTop:8}}>{st.name}</div>
+          <div style={{color:"#8a96b0",fontSize:12}}>{st.id}</div>
+        </div>
+        {items.map(([k,l])=><div key={k} style={si(tab===k)} onClick={()=>{setTab(k);setAc(null);setAl(null);}}>{l}</div>)}
+        <div style={{...si(false),color:danger,marginTop:8}} onClick={logout}>Logout</div>
+      </div>
+
+      <div style={{flex:1,padding:"26px",overflowY:"auto"}}>
+
+        {tab==="overview"&&(
+          <div>
+            <div style={{fontSize:19,fontWeight:700,color:navy,marginBottom:4}}>Welcome, {st.name.split(" ")[0]}!</div>
+            <div style={{color:textMu,fontSize:13,marginBottom:20}}>Your learning overview</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:22}}>
+              {[["Courses",st.enrolledCourses.length,info],["Lectures",enrolled.reduce((a,c)=>a+c.lectures.length,0),success],["Exams",myExams.length,gold],["Results",(st.results||[]).length,danger]].map(([l,v,c])=>(
+                <div key={l} style={{background:white,borderRadius:10,border:`1px solid ${bdr}`,padding:"14px 16px",borderLeft:`4px solid ${c}`}}>
+                  <div style={{fontSize:24,fontWeight:800,color:c}}>{v}</div>
+                  <div style={{fontSize:12,color:textMu}}>{l}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{fontSize:15,fontWeight:700,color:navy,marginBottom:10}}>Course Progress</div>
+            {enrolled.map(c=>(
+              <div key={c.id} style={{...card,marginBottom:10}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                  <div style={{fontWeight:600,color:navy,fontSize:13}}>{c.name}</div>
+                  <span style={{color:gold,fontWeight:700,fontSize:13}}>{st.progress[c.id]||0}%</span>
+                </div>
+                <div style={{height:7,borderRadius:4,background:bdr,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${st.progress[c.id]||0}%`,background:gold,borderRadius:4}}></div>
+                </div>
+                <div style={{marginTop:8,display:"flex",gap:6}}>
+                  {[25,50,75,100].map(p=><button key={p} style={{...btn("primary"),padding:"3px 9px",fontSize:11}} onClick={()=>setProgress(c.id,p)}>{p}%</button>)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab==="courses"&&!ac&&(
+          <div>
+            <div style={{fontSize:19,fontWeight:700,color:navy,marginBottom:12}}>My Courses</div>
+            <input style={{...inp,maxWidth:280,marginBottom:14}} placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:14}}>
+              {enrolled.filter(c=>c.name.toLowerCase().includes(search.toLowerCase())).map(c=>(
+                <div key={c.id} style={{...card,cursor:"pointer"}} onClick={()=>setAc(c)}>
+                  <div style={{background:info+"18",color:info,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,display:"inline-block",marginBottom:6}}>{c.id}</div>
+                  <div style={{fontWeight:700,fontSize:14,color:navy,marginBottom:4}}>{c.name}</div>
+                  <div style={{color:textMu,fontSize:13}}>{c.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {tab==="courses"&&ac&&!al&&(
+          <div>
+            <button style={{...btn("primary"),marginBottom:12,padding:"5px 12px",fontSize:13}} onClick={()=>setAc(null)}>← Back</button>
+            <div style={{fontSize:18,fontWeight:700,color:navy,marginBottom:14}}>{ac.name}</div>
+            {courses.find(c=>c.id===ac.id)?.lectures.map(l=>(
+              <div key={l.id} style={{...card,marginBottom:10,cursor:"pointer",display:"flex",gap:12,alignItems:"center"}} onClick={()=>setAl(l)}>
+                <div style={{width:36,height:36,borderRadius:8,background:l.type==="video"?info+"22":success+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{l.type==="video"?"▶":"📖"}</div>
+                <div><div style={{fontWeight:600,color:navy,fontSize:13}}>{l.title}</div><div style={{fontSize:12,color:textMu}}>{l.type==="video"?"Video":"Theory"}</div></div>
+              </div>
+            ))}
+          </div>
+        )}
+        {tab==="courses"&&al&&(
+          <div>
+            <button style={{...btn("primary"),marginBottom:12,padding:"5px 12px",fontSize:13}} onClick={()=>setAl(null)}>← Back</button>
+            <div style={{fontSize:18,fontWeight:700,color:navy,marginBottom:10}}>{al.title}</div>
+            {al.type==="theory"&&<div style={{...card,lineHeight:1.8,color:textMu,fontSize:14}}>{al.content}</div>}
+            {al.type==="video"&&al.url&&<div style={{borderRadius:10,overflow:"hidden",aspectRatio:"16/9"}}><iframe width="100%" height="100%" src={al.url} style={{border:"none",display:"block"}} allowFullScreen title={al.title}/></div>}
+          </div>
+        )}
+
+        {tab==="browse"&&(
+          <div>
+            <div style={{fontSize:19,fontWeight:700,color:navy,marginBottom:14}}>Browse All Courses</div>
+            {others.length===0&&<div style={{color:textMu}}>You are enrolled in all available courses.</div>}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:14}}>
+              {others.map(c=>(
+                <div key={c.id} style={card}>
+                  <div style={{background:gold+"22",color:navy,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,display:"inline-block",marginBottom:6}}>{c.id}</div>
+                  <div style={{fontWeight:700,fontSize:14,color:navy,marginBottom:4}}>{c.name}</div>
+                  <div style={{color:textMu,fontSize:13}}>{c.desc}</div>
+                  <div style={{marginTop:8,fontSize:12,color:textMu}}>Contact admin to enroll.</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab==="exams"&&(
+          <div>
+            <div style={{fontSize:19,fontWeight:700,color:navy,marginBottom:14}}>My Exams</div>
+            {myExams.length===0&&<div style={{color:textMu}}>No exams assigned yet.</div>}
+            {myExams.map(e=>{
+              const taken=alreadyTaken(e.id);
+              const course=courses.find(c=>c.id===e.courseId);
+              return(
+                <div key={e.id} style={{...card,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+                  <div>
+                    <div style={{fontWeight:700,color:navy,fontSize:14,marginBottom:4}}>{e.title}</div>
+                    <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                      <span style={{fontSize:12,color:textMu}}>Course: {course?course.name:e.courseId}</span>
+                      <span style={{fontSize:12,color:textMu}}>Questions: {e.questions.length}</span>
+                      <span style={{fontSize:12,color:textMu}}>Time: {e.timeLimit} min</span>
+                      <span style={{fontSize:12,color:textMu}}>Passing: {e.passingMarks}/{e.questions.length}</span>
+                    </div>
+                    {taken&&<div style={{marginTop:6,fontSize:12,color:taken.passed?success:danger,fontWeight:600}}>Last score: {taken.score}/{taken.total} — {taken.passed?"Passed ✓":"Failed ✗"}</div>}
+                  </div>
+                  <button style={btn(taken?"outline":"gold")} onClick={()=>setActiveExam(e)}>{taken?"Retake Exam":"Start Exam"}</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {tab==="results"&&(
+          <div>
+            <div style={{fontSize:19,fontWeight:700,color:navy,marginBottom:14}}>My Results</div>
+            {(st.results||[]).length===0&&<div style={{color:textMu}}>No results yet. Take an exam first!</div>}
+            {(st.results||[]).map((r,i)=>(
+              <div key={i} style={{...card,marginBottom:12,borderLeft:`4px solid ${r.passed?success:danger}`}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                  <div>
+                    <div style={{fontWeight:700,color:navy,fontSize:14}}>{r.examTitle}</div>
+                    <div style={{fontSize:12,color:textMu,marginTop:2}}>Date: {r.date}</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:22,fontWeight:800,color:r.passed?success:danger}}>{r.score}/{r.total}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:r.passed?success:danger}}>{r.passed?"PASSED":"FAILED"}</div>
+                  </div>
+                </div>
+                <div style={{marginTop:8,height:6,borderRadius:3,background:bdr,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${(r.score/r.total)*100}%`,background:r.passed?success:danger,borderRadius:3}}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab==="profile"&&(
+          <div style={{...card,maxWidth:460}}>
+            <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
+              <div style={{position:"relative",flexShrink:0}}>
+                <Avatar name={st.name} src={st.avatar} size={68}/>
+                <label htmlFor="av" style={{position:"absolute",bottom:0,right:0,width:22,height:22,borderRadius:"50%",background:navy,border:`2px solid ${gold}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:11,color:gold}}>✎</label>
+                <input id="av" type="file" accept="image/*" style={{display:"none"}} onChange={changeAvatar}/>
+              </div>
+              <div>
+                <div style={{fontSize:18,fontWeight:700,color:navy}}>{st.name}</div>
+                <div style={{color:textMu,fontSize:13,marginBottom:6}}>{st.id}</div>
+                <label htmlFor="av2" style={{...btn("gold"),padding:"4px 12px",fontSize:12,cursor:"pointer",display:"inline-block"}}>Change Photo</label>
+                <input id="av2" type="file" accept="image/*" style={{display:"none"}} onChange={changeAvatar}/>
+              </div>
+            </div>
+            {[["Email",st.email],["Phone",st.phone],["Address",st.address],["Enrolled",st.enrolledCourses.join(", ")||"None"]].map(([k,v])=>(
+              <div key={k} style={{borderBottom:`1px solid ${bdr}`,padding:"9px 0"}}>
+                <div style={{fontSize:11,fontWeight:700,color:gold,letterSpacing:1}}>{k.toUpperCase()}</div>
+                <div style={{color:textMu,fontSize:13,marginTop:2}}>{v||"—"}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab==="notifs"&&(
+          <div>
+            <div style={{fontSize:19,fontWeight:700,color:navy,marginBottom:14}}>Notifications</div>
+            {st.notifications.length===0&&<div style={{color:textMu}}>No notifications.</div>}
+            {st.notifications.map((n,i)=>(
+              <div key={i} style={{...card,marginBottom:10,display:"flex",gap:10,alignItems:"center"}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:gold,flexShrink:0}}></div>
+                <div style={{color:textMu,fontSize:13}}>{n}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+/* ─── ADMIN EXAM MANAGER ─── */
+function ExamManager({exams,setExams,courses,students}){
+  const [view,setView]=useState("list"); // list | create | edit | questions
+  const [selExam,setSelExam]=useState(null);
+  const [ef,setEf]=useState({title:"",courseId:"",timeLimit:15,passingMarks:5,assignedTo:"all"});
+  const [qf,setQf]=useState({text:"",options:["","","",""],correct:0});
+  const ue=(k,v)=>setEf(p=>({...p,[k]:v}));
+  const uq=(k,v)=>setQf(p=>({...p,[k]:v}));
+  const uqo=(i,v)=>setQf(p=>({...p,options:p.options.map((o,oi)=>oi===i?v:o)}));
+
+  const saveExam=()=>{
+    if(!ef.title||!ef.courseId)return alert("Fill title and course.");
+    if(view==="create"){
+      const ne={...ef,id:"EX"+Date.now(),questions:[],timeLimit:Number(ef.timeLimit),passingMarks:Number(ef.passingMarks)};
+      setExams(p=>[...p,ne]);setSelExam(ne);setView("questions");
+    } else {
+      setExams(p=>p.map(e=>e.id===selExam.id?{...e,...ef,timeLimit:Number(ef.timeLimit),passingMarks:Number(ef.passingMarks)}:e));
+      setView("list");
+    }
+  };
+
+  const addQ=()=>{
+    if(!qf.text||qf.options.some(o=>!o.trim()))return alert("Fill question and all 4 options.");
+    const nq={...qf,id:"q"+Date.now(),correct:Number(qf.correct)};
+    setExams(p=>p.map(e=>e.id===selExam.id?{...e,questions:[...e.questions,nq]}:e));
+    setSelExam(p=>({...p,questions:[...p.questions,nq]}));
+    setQf({text:"",options:["","","",""],correct:0});
+  };
+  const delQ=(qid)=>{
+    setExams(p=>p.map(e=>e.id===selExam.id?{...e,questions:e.questions.filter(q=>q.id!==qid)}:e));
+    setSelExam(p=>({...p,questions:p.questions.filter(q=>q.id!==qid)}));
+  };
+  const delExam=(id)=>setExams(p=>p.filter(e=>e.id!==id));
+
+  if(view==="list") return(
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div style={{fontSize:19,fontWeight:700,color:navy}}>Exams ({exams.length})</div>
+        <button style={btn("gold")} onClick={()=>{setEf({title:"",courseId:"",timeLimit:15,passingMarks:5,assignedTo:"all"});setView("create");}}>+ Create Exam</button>
+      </div>
+      {exams.length===0&&<div style={{color:textMu}}>No exams created yet.</div>}
+      {exams.map(e=>{
+        const course=courses.find(c=>c.id===e.courseId);
+        return(
+          <div key={e.id} style={{...card,marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
+              <div>
+                <div style={{fontWeight:700,color:navy,fontSize:15,marginBottom:4}}>{e.title}</div>
+                <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                  <span style={{fontSize:12,color:textMu}}>Course: {course?course.name:e.courseId}</span>
+                  <span style={{fontSize:12,color:textMu}}>Questions: {e.questions.length}</span>
+                  <span style={{fontSize:12,color:textMu}}>Time: {e.timeLimit} min</span>
+                  <span style={{fontSize:12,color:textMu}}>Passing: {e.passingMarks}</span>
+                  <span style={{fontSize:12,color:textMu}}>Assigned: {e.assignedTo==="all"?"All Students":e.assignedTo}</span>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button style={{...btn("primary"),padding:"5px 12px",fontSize:12}} onClick={()=>{setSelExam(e);setEf({title:e.title,courseId:e.courseId,timeLimit:e.timeLimit,passingMarks:e.passingMarks,assignedTo:e.assignedTo});setView("edit");}}>Edit</button>
+                <button style={{...btn("primary"),padding:"5px 12px",fontSize:12}} onClick={()=>{setSelExam(e);setView("questions");}}>Questions ({e.questions.length})</button>
+                <button style={{...btn("danger"),padding:"5px 12px",fontSize:12}} onClick={()=>delExam(e.id)}>Delete</button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  if(view==="create"||view==="edit") return(
+    <div style={{maxWidth:520}}>
+      <button style={{...btn("primary"),marginBottom:14,padding:"5px 12px",fontSize:13}} onClick={()=>setView("list")}>← Back</button>
+      <div style={{fontSize:18,fontWeight:700,color:navy,marginBottom:16}}>{view==="create"?"Create New Exam":"Edit Exam"}</div>
+      <div style={card}>
+        <label style={lbl}>Exam Title *</label><input style={inp} value={ef.title} onChange={e=>ue("title",e.target.value)} placeholder="e.g. Python Basics Quiz"/>
+        <label style={lbl}>Course *</label>
+        <select style={{...inp}} value={ef.courseId} onChange={e=>ue("courseId",e.target.value)}>
+          <option value="">Select Course</option>
+          {courses.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div><label style={lbl}>Time Limit (minutes) *</label><input style={inp} type="number" min="1" value={ef.timeLimit} onChange={e=>ue("timeLimit",e.target.value)}/></div>
+          <div><label style={lbl}>Passing Marks *</label><input style={inp} type="number" min="1" value={ef.passingMarks} onChange={e=>ue("passingMarks",e.target.value)}/></div>
+        </div>
+        <label style={lbl}>Assign To</label>
+        <select style={{...inp}} value={ef.assignedTo} onChange={e=>ue("assignedTo",e.target.value)}>
+          <option value="all">All Students</option>
+          {/* individual student assignment can be added here */}
+        </select>
+        <button style={{...btn("gold"),width:"100%",padding:"11px"}} onClick={saveExam}>{view==="create"?"Create & Add Questions":"Save Changes"}</button>
+      </div>
+    </div>
+  );
+
+  if(view==="questions"&&selExam) return(
+    <div>
+      <button style={{...btn("primary"),marginBottom:14,padding:"5px 12px",fontSize:13}} onClick={()=>setView("list")}>← Back to Exams</button>
+      <div style={{fontSize:17,fontWeight:700,color:navy,marginBottom:4}}>{selExam.title} — Questions</div>
+      <div style={{color:textMu,fontSize:13,marginBottom:16}}>{exams.find(e=>e.id===selExam.id)?.questions.length||0} question(s) added</div>
+
+      <div style={{...card,marginBottom:20}}>
+        <div style={{fontWeight:600,color:navy,marginBottom:12}}>Add New Question</div>
+        <label style={lbl}>Question *</label>
+        <input style={inp} value={qf.text} onChange={e=>uq("text",e.target.value)} placeholder="Enter your question here..."/>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          {[0,1,2,3].map(i=>(
+            <div key={i}>
+              <label style={lbl}>Option {String.fromCharCode(65+i)} *</label>
+              <input style={{...inp,marginBottom:0}} value={qf.options[i]} onChange={e=>uqo(i,e.target.value)} placeholder={`Option ${String.fromCharCode(65+i)}`}/>
+            </div>
+          ))}
+        </div>
+        <label style={lbl}>Correct Answer *</label>
+        <select style={{...inp}} value={qf.correct} onChange={e=>uq("correct",Number(e.target.value))}>
+          {[0,1,2,3].map(i=><option key={i} value={i}>Option {String.fromCharCode(65+i)}: {qf.options[i]||"—"}</option>)}
+        </select>
+        <button style={{...btn("gold"),width:"100%",padding:"10px"}} onClick={addQ}>Add Question</button>
+      </div>
+
+      {exams.find(e=>e.id===selExam.id)?.questions.map((q,i)=>(
+        <div key={q.id} style={{...card,marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,color:navy,fontSize:13,marginBottom:8}}>Q{i+1}. {q.text}</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                {q.options.map((o,oi)=>(
+                  <div key={oi} style={{fontSize:12,padding:"5px 10px",borderRadius:6,background:oi===q.correct?success+"18":bg,border:`1px solid ${oi===q.correct?success:bdr}`,color:oi===q.correct?success:textMu,fontWeight:oi===q.correct?600:400}}>
+                    <span style={{fontWeight:700,marginRight:4}}>{String.fromCharCode(65+oi)}.</span>{o} {oi===q.correct?"✓":""}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button style={{...btn("danger"),padding:"4px 10px",fontSize:12,flexShrink:0}} onClick={()=>delQ(q.id)}>Delete</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return null;
+}
+
+/* ─── ADMIN SETTINGS ─── */
+function AdminSettings(){
+  const [cf,setCf]=useState({oldPw:"",newPw:"",confirm:""});
+  const [msg,setMsg]=useState(null); // {type:"success"|"error", text}
+  const uc=(k,v)=>setCf(p=>({...p,[k]:v}));
+
+  const changePw=()=>{
+    setMsg(null);
+    if(!cf.oldPw||!cf.newPw||!cf.confirm)return setMsg({type:"error",text:"Please fill all fields."});
+    if(cf.oldPw!==ADMIN.password)return setMsg({type:"error",text:"Current password is incorrect."});
+    if(cf.newPw.length<6)return setMsg({type:"error",text:"New password must be at least 6 characters."});
+    if(cf.newPw!==cf.confirm)return setMsg({type:"error",text:"New passwords do not match."});
+    ADMIN.password=cf.newPw;
+    ADMIN.id=ADMIN.id;
+    setCf({oldPw:"",newPw:"",confirm:""});
+    setMsg({type:"success",text:"Password changed successfully! Use new password next time you login."});
+  };
+
+  const [idf,setIdf]=useState({newId:"",pw:""});
+  const [idmsg,setIdmsg]=useState(null);
+  const changeId=()=>{
+    setIdmsg(null);
+    if(!idf.newId||!idf.pw)return setIdmsg({type:"error",text:"Please fill all fields."});
+    if(idf.pw!==ADMIN.password)return setIdmsg({type:"error",text:"Password is incorrect."});
+    if(idf.newId.length<3)return setIdmsg({type:"error",text:"Username must be at least 3 characters."});
+    ADMIN.id=idf.newId;
+    setIdf({newId:"",pw:""});
+    setIdmsg({type:"success",text:`Username changed to "${ADMIN.id}" successfully!`});
+  };
+
+  return(
+    <div style={{maxWidth:480}}>
+      <div style={{fontSize:19,fontWeight:700,color:navy,marginBottom:20}}>Admin Settings</div>
+
+      <div style={{...card,marginBottom:18}}>
+        <div style={{fontSize:15,fontWeight:700,color:navy,marginBottom:4}}>Change Username</div>
+        <div style={{fontSize:13,color:textMu,marginBottom:14}}>Update your admin login username.</div>
+        <label style={lbl}>New Username</label>
+        <input style={inp} value={idf.newId} onChange={e=>setIdf(p=>({...p,newId:e.target.value}))} placeholder="Enter new username"/>
+        <label style={lbl}>Current Password (to confirm)</label>
+        <input style={inp} type="password" value={idf.pw} onChange={e=>setIdf(p=>({...p,pw:e.target.value}))} placeholder="Enter current password"/>
+        {idmsg&&<div style={{padding:"9px 12px",borderRadius:8,marginBottom:10,fontSize:13,background:idmsg.type==="success"?success+"18":danger+"18",color:idmsg.type==="success"?success:danger,border:`1px solid ${idmsg.type==="success"?success:danger}44`}}>{idmsg.text}</div>}
+        <button style={{...btn("gold"),width:"100%",padding:"10px"}} onClick={changeId}>Update Username</button>
+      </div>
+
+      <div style={card}>
+        <div style={{fontSize:15,fontWeight:700,color:navy,marginBottom:4}}>Change Password</div>
+        <div style={{fontSize:13,color:textMu,marginBottom:14}}>Keep your admin account secure with a strong password.</div>
+        <label style={lbl}>Current Password</label>
+        <input style={inp} type="password" value={cf.oldPw} onChange={e=>uc("oldPw",e.target.value)} placeholder="Enter current password"/>
+        <label style={lbl}>New Password</label>
+        <input style={inp} type="password" value={cf.newPw} onChange={e=>uc("newPw",e.target.value)} placeholder="Minimum 6 characters"/>
+        <label style={lbl}>Confirm New Password</label>
+        <input style={inp} type="password" value={cf.confirm} onChange={e=>uc("confirm",e.target.value)} placeholder="Repeat new password"/>
+        {msg&&<div style={{padding:"9px 12px",borderRadius:8,marginBottom:10,fontSize:13,background:msg.type==="success"?success+"18":danger+"18",color:msg.type==="success"?success:danger,border:`1px solid ${msg.type==="success"?success:danger}44`}}>{msg.text}</div>}
+        <button style={{...btn("gold"),width:"100%",padding:"10px"}} onClick={changePw}>Update Password</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── ADMIN PANEL ─── */
+function AdminPanel({courses,setCourses,exams,setExams,students,setStudents,logout}){
+  const [tab,setTab]=useState("students");
+  const [modal,setModal]=useState(null);
+  const [form,setForm]=useState({});
+  const [ac,setAc]=useState(null);
+  const [lf,setLf]=useState({type:"theory",title:"",content:"",url:""});
+  const [notif,setNotif]=useState("");
+  const uf=(k,v)=>setForm(p=>({...p,[k]:v}));
+  const ul=(k,v)=>setLf(p=>({...p,[k]:v}));
+
+  const saveSt=()=>{
+    if(!form.id||!form.name||!form.password)return;
+    if(modal==="add-st") setStudents(p=>[...p,{...form,enrolledCourses:form.enrolledCourses?form.enrolledCourses.split(",").map(s=>s.trim()):[],progress:{},notifications:["Welcome to CCIT!"],avatar:"",results:[]}]);
+    else setStudents(p=>p.map(s=>s.id===form.id?{...s,...form,enrolledCourses:typeof form.enrolledCourses==="string"?form.enrolledCourses.split(",").map(x=>x.trim()):form.enrolledCourses}:s));
+    setModal(null);setForm({});
+  };
+  const saveCo=()=>{
+    if(!form.id||!form.name)return;
+    if(modal==="add-co") setCourses(p=>[...p,{...form,lectures:[]}]);
+    else setCourses(p=>p.map(c=>c.id===form.id?{...c,...form}:c));
+    setModal(null);setForm({});
+  };
+  const addLec=(cid)=>{
+    if(!lf.title)return;
+    setCourses(p=>p.map(c=>c.id===cid?{...c,lectures:[...c.lectures,{...lf,id:"l"+Date.now()}]}:c));
+    setLf({type:"theory",title:"",content:"",url:""});
+  };
+  const sendNotif=()=>{
+    if(!notif.trim())return;
+    setStudents(p=>p.map(s=>({...s,notifications:[notif,...s.notifications]})));
+    setNotif("");alert("Notification sent!");
+  };
+
+  const sideItems=[["students","Students"],["courses","Courses"],["exams","Exam Manager"],["results","Student Results"],["notifs","Send Notification"],["settings","Settings"]];
+
+  return(
+    <div style={{display:"flex",minHeight:"calc(100vh - 60px)"}}>
+      <div style={{width:225,background:navy,flexShrink:0}}>
+        <div style={{padding:"18px 18px 14px",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
+          <div style={{width:46,height:46,borderRadius:"50%",background:gold,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:800,color:navy,marginBottom:8}}>NA</div>
+          <div style={{color:white,fontWeight:700,fontSize:13}}>Nadeem Ahmad</div>
+          <div style={{color:"#8a96b0",fontSize:12}}>Head of Department</div>
+        </div>
+        {sideItems.map(([k,l])=><div key={k} style={si(tab===k)} onClick={()=>{setTab(k);setAc(null);}}>{l}</div>)}
+        <div style={{...si(false),color:danger}} onClick={logout}>Logout</div>
+      </div>
+
+      <div style={{flex:1,padding:"26px",overflowY:"auto"}}>
+
+        {tab==="students"&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <div style={{fontSize:19,fontWeight:700,color:navy}}>Students ({students.length})</div>
+              <button style={btn("gold")} onClick={()=>{setModal("add-st");setForm({});}}>+ Add Student</button>
+            </div>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",background:white,borderRadius:10,overflow:"hidden",border:`1px solid ${bdr}`}}>
+                <thead><tr style={{background:navy}}>
+                  {["ID","Name","Email","Courses","Actions"].map(h=><th key={h} style={{padding:"10px 12px",textAlign:"left",color:white,fontSize:13,fontWeight:600}}>{h}</th>)}
+                </tr></thead>
+                <tbody>{students.map((s,i)=>(
+                  <tr key={s.id} style={{borderBottom:`1px solid ${bdr}`,background:i%2===0?white:bg}}>
+                    <td style={{padding:"9px 12px",fontSize:13,fontWeight:600,color:info}}>{s.id}</td>
+                    <td style={{padding:"9px 12px",fontSize:13}}>{s.name}</td>
+                    <td style={{padding:"9px 12px",fontSize:13,color:textMu}}>{s.email||"—"}</td>
+                    <td style={{padding:"9px 12px",fontSize:12}}>{s.enrolledCourses.join(", ")||"None"}</td>
+                    <td style={{padding:"9px 12px"}}>
+                      <button style={{...btn("primary"),padding:"4px 10px",fontSize:12,marginRight:6}} onClick={()=>{setModal("edit-st");setForm({...s,enrolledCourses:s.enrolledCourses.join(", ")});}}>Edit</button>
+                      <button style={{...btn("danger"),padding:"4px 10px",fontSize:12}} onClick={()=>setStudents(p=>p.filter(x=>x.id!==s.id))}>Delete</button>
+                    </td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {tab==="courses"&&!ac&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <div style={{fontSize:19,fontWeight:700,color:navy}}>Courses ({courses.length})</div>
+              <button style={btn("gold")} onClick={()=>{setModal("add-co");setForm({});}}>+ Add Course</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:14}}>
+              {courses.map(c=>(
+                <div key={c.id} style={card}>
+                  <div style={{background:info+"18",color:info,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,display:"inline-block",marginBottom:6}}>{c.id}</div>
+                  <div style={{fontWeight:700,fontSize:14,color:navy,marginBottom:4}}>{c.name}</div>
+                  <div style={{color:textMu,fontSize:13,marginBottom:10}}>{c.desc}</div>
+                  <div style={{fontSize:12,color:textMu,marginBottom:10}}>{c.lectures.length} Lecture(s)</div>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                    <button style={{...btn("primary"),padding:"5px 11px",fontSize:12}} onClick={()=>setAc(c)}>Lectures</button>
+                    <button style={{...btn("primary"),padding:"5px 11px",fontSize:12}} onClick={()=>{setModal("edit-co");setForm({...c});}}>Edit</button>
+                    <button style={{...btn("danger"),padding:"5px 11px",fontSize:12}} onClick={()=>setCourses(p=>p.filter(x=>x.id!==c.id))}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {tab==="courses"&&ac&&(
+          <div>
+            <button style={{...btn("primary"),marginBottom:12,padding:"5px 12px",fontSize:13}} onClick={()=>setAc(null)}>← Back</button>
+            <div style={{fontSize:17,fontWeight:700,color:navy,marginBottom:14}}>{ac.name} — Lectures</div>
+            <div style={{...card,marginBottom:16}}>
+              <div style={{fontWeight:600,color:navy,marginBottom:10}}>Add Lecture</div>
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                {["theory","video"].map(t=><button key={t} style={{...btn(lf.type===t?"gold":"primary"),padding:"5px 14px",fontSize:12}} onClick={()=>ul("type",t)}>{t==="theory"?"📖 Theory":"▶ Video"}</button>)}
+              </div>
+              <label style={lbl}>Title</label><input style={inp} value={lf.title} onChange={e=>ul("title",e.target.value)} placeholder="Lecture title"/>
+              {lf.type==="theory"&&<><label style={lbl}>Content</label><textarea style={{...inp,height:80,resize:"vertical"}} value={lf.content} onChange={e=>ul("content",e.target.value)}/></>}
+              {lf.type==="video"&&<><label style={lbl}>YouTube Embed URL</label><input style={inp} value={lf.url} onChange={e=>ul("url",e.target.value)} placeholder="https://www.youtube.com/embed/..."/></>}
+              <button style={btn("gold")} onClick={()=>addLec(ac.id)}>Add Lecture</button>
+            </div>
+            {courses.find(c=>c.id===ac.id)?.lectures.map(l=>(
+              <div key={l.id} style={{...card,marginBottom:10,display:"flex",gap:10,alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                  <div style={{fontSize:16}}>{l.type==="video"?"▶":"📖"}</div>
+                  <div><div style={{fontWeight:600,color:navy,fontSize:13}}>{l.title}</div><div style={{fontSize:12,color:textMu}}>{l.type==="video"?"Video":"Theory"}</div></div>
+                </div>
+                <button style={{...btn("danger"),padding:"4px 10px",fontSize:12}} onClick={()=>setCourses(p=>p.map(c=>c.id===ac.id?{...c,lectures:c.lectures.filter(x=>x.id!==l.id)}:c))}>Delete</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab==="exams"&&<ExamManager exams={exams} setExams={setExams} courses={courses} students={students}/>}
+
+        {tab==="results"&&(
+          <div>
+            <div style={{fontSize:19,fontWeight:700,color:navy,marginBottom:16}}>All Student Results</div>
+            {students.map(s=>{
+              const res=s.results||[];
+              if(res.length===0)return null;
+              return(
+                <div key={s.id} style={{...card,marginBottom:14}}>
+                  <div style={{fontWeight:700,color:navy,fontSize:14,marginBottom:10}}>{s.name} ({s.id})</div>
+                  {res.map((r,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",borderRadius:8,background:r.passed?success+"10":danger+"10",border:`1px solid ${r.passed?success:danger}22`,marginBottom:6}}>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:600,color:textM}}>{r.examTitle}</div>
+                        <div style={{fontSize:12,color:textMu}}>Date: {r.date}</div>
+                      </div>
+                      <div style={{textAlign:"right"}}>
+                        <div style={{fontSize:16,fontWeight:800,color:r.passed?success:danger}}>{r.score}/{r.total}</div>
+                        <div style={{fontSize:11,fontWeight:600,color:r.passed?success:danger}}>{r.passed?"PASS":"FAIL"}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+            {students.every(s=>(s.results||[]).length===0)&&<div style={{color:textMu}}>No results yet.</div>}
+          </div>
+        )}
+
+        {tab==="notifs"&&(
+          <div style={{...card,maxWidth:480}}>
+            <div style={{fontSize:17,fontWeight:700,color:navy,marginBottom:12}}>Send Notification to All Students</div>
+            <label style={lbl}>Message</label>
+            <textarea style={{...inp,height:100,resize:"vertical"}} value={notif} onChange={e=>setNotif(e.target.value)} placeholder="Write your notification..."/>
+            <button style={{...btn("gold"),width:"100%",padding:"10px"}} onClick={sendNotif}>Send to All Students</button>
+          </div>
+        )}
+
+        {tab==="settings"&&(
+          <AdminSettings/>
+        )}
+      </div>
+
+      {modal&&(
+        <Modal title={modal==="add-st"?"Add Student":modal==="edit-st"?"Edit Student":modal==="add-co"?"Add Course":"Edit Course"} onClose={()=>setModal(null)}>
+          {modal.includes("st")&&[["id","Student ID *"],["name","Full Name *"],["email","Email"],["phone","Phone"],["address","Address"],["password","Password *"],["enrolledCourses","Enrolled Courses (comma separated)"]].map(([k,l])=>(
+            <div key={k}><label style={lbl}>{l}</label><input style={inp} value={form[k]||""} onChange={e=>uf(k,e.target.value)} disabled={modal==="edit-st"&&k==="id"}/></div>
+          ))}
+          {modal.includes("co")&&[["id","Course ID *"],["name","Course Name *"],["desc","Description"]].map(([k,l])=>(
+            <div key={k}><label style={lbl}>{l}</label><input style={inp} value={form[k]||""} onChange={e=>uf(k,e.target.value)} disabled={modal==="edit-co"&&k==="id"}/></div>
+          ))}
+          <div style={{display:"flex",gap:10,marginTop:6}}>
+            <button style={btn("gold")} onClick={modal.includes("st")?saveSt:saveCo}>Save</button>
+            <button style={{...btn("outline"),color:textMu}} onClick={()=>setModal(null)}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/* ─── ROOT APP ─── */
+function App(){
+  const [page,setPage]=useState("home");
+  const [user,setUser]=useState(null);
+  const [courses,setCourses]=useState(()=>{try{const s=localStorage.getItem('ccit_courses');return s?JSON.parse(s):initCourses;}catch{return initCourses;}});
+  const [students,setStudents]=useState(()=>{try{const s=localStorage.getItem('ccit_students');return s?JSON.parse(s):initStudents;}catch{return initStudents;}});
+  const [exams,setExams]=useState(()=>{try{const s=localStorage.getItem('ccit_exams');return s?JSON.parse(s):initExams;}catch{return initExams;}});
+
+  useEffect(()=>{try{localStorage.setItem('ccit_courses',JSON.stringify(courses));}catch{}},[courses]);
+  useEffect(()=>{try{localStorage.setItem('ccit_students',JSON.stringify(students));}catch{}},[students]);
+  useEffect(()=>{try{localStorage.setItem('ccit_exams',JSON.stringify(exams));}catch{}},[exams]);
+
+  const login=(role,id,pw,setErr)=>{
+    if(role==="admin"){
+      if(id===ADMIN.id&&pw===ADMIN.password){setUser({id:"admin",name:"Nadeem Ahmad",role:"admin"});setPage("admin");}
+      else setErr("Invalid admin credentials.");
+    } else {
+      const st=students.find(s=>s.id===id&&s.password===pw);
+      if(st){setUser({id:st.id,name:st.name,role:"student"});setPage("dashboard");}
+      else setErr("Invalid Student ID or password.");
+    }
+  };
+  const register=(f,setErr)=>{
+    if(students.find(s=>s.id===f.id))return setErr("Student ID already exists.");
+    setStudents(p=>[...p,{...f,enrolledCourses:[],progress:{},notifications:["Welcome to CCIT!"],avatar:"",results:[]}]);
+    alert("Registration successful! Please login.");setPage("login");
+  };
+  const logout=()=>{setUser(null);setPage("home");};
+
+  return(
+    <div style={{minHeight:"100vh",background:bg,fontFamily:"'Segoe UI',sans-serif",color:textM}}>
+      <Navbar page={page} setPage={setPage} user={user} logout={logout}/>
+      {page==="home"&&<Home setPage={setPage}/>}
+      {page==="courses"&&<Courses courses={courses}/>}
+      {page==="about"&&<About/>}
+      {page==="contact"&&<Contact/>}
+      {page==="login"&&<Login onLogin={login} setPage={setPage}/>}
+      {page==="register"&&<Register onReg={register} setPage={setPage}/>}
+      {page==="dashboard"&&user?.role==="student"&&<StudentDash user={user} courses={courses} exams={exams} students={students} setStudents={setStudents} logout={logout}/>}
+      {page==="admin"&&user?.role==="admin"&&<AdminPanel courses={courses} setCourses={setCourses} exams={exams} setExams={setExams} students={students} setStudents={setStudents} logout={logout}/>}
+      {(page==="dashboard"||page==="admin")&&!user&&<Login onLogin={login} setPage={setPage}/>}
+      <div style={{background:navy,color:"#8a96b0",textAlign:"center",padding:"16px",fontSize:12}}>© 2024 Computer College of IT — Head of Department: Nadeem Ahmad</div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
